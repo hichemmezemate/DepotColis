@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css.css" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <title>Colis</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg bg-warning">
+        <a href="index.html">
+            <img src="images/Logo_DepotColis.png" alt="Image Dépôt Colis" height="70">
+        </a>
+        <div class="container-fluid">
+          <a class="navbar-brand" href="index.html">Dépot-Colis</a>
+          <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav">
+              <a class="nav-link" href="depot.html">Dépôts</a>
+              <a class="nav-link" href="colis.html">Colis</a>
+            </div>
+          </div>
+        </div>
+    </nav>
+
+
+    
+    <center>
+        <br>
+        <h1>Liste des Colis</h1>
+
+        <table class="table table-warning container" id="colisTable" border="1">
+            <thead>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Numéro</th>
+                    <th scope="col">Adresse</th>
+                    <th scope="col">Nom destinataire</th>
+                    <th scope="col">Prénom destinataire</th>
+                    <th scope="col">Tel destinataire</th>
+                    <th scope="col">Id dépôt</th>
+                    <th scope="col">Opérations</th>
+                </tr>
+            </thead>
+            <tbody id="colisList"></tbody>
+        </table>
+
+
+        <!-- Formulaire pour l'ajout d'un nouveau colis -->
+        <div class="mt-4 container">
+            <h2>Ajouter un nouveau colis</h2>
+            <form id="addColisForm">
+                <input type="text" class="form-control" placeholder="Numéro de colis..." id="numero" name="numero" required>
+                <br>
+                <input type="text" class="form-control"  placeholder="Adresse livraison..." id="adresse_livraison" name="adresse_livraison" required>
+                <br>
+                <input type="text" class="form-control" placeholder="Nom destinataire..." id="nom_destinataire" name="nom_destinataire" required>
+                <br>
+                <input type="text" class="form-control" placeholder="Prénom destinataire..." id="prenom_destinataire" name="prenom_destinataire" required>
+                <br>
+                <input type="text" class="form-control"  placeholder="Tel destinataire..." id="tel_destinataire" name="tel_destinataire" required>
+                <br>
+                <select class="form-control" id="id_depot" name="id_depot" required></select>
+                <br>
+                <button type="button" id="addColisButton" class="form-control btn btn-success" onclick="addColis()">Ajouter</button>
+                <button type="button" id="updateColisButton" class="form-control btn btn-primary" style="display: none;" onclick="updateColis()">Modifier</button>
+
+
+
+            </form>
+        </div>
+        <script>
+
+            // Fonction pour remplir le select avec la liste des dépôts
+            function fillDepotSelect() {
+                fetch('http://localhost:8080/depot')
+                    .then(response => response.json())
+                    .then(data => {
+                        const selectDepot = document.getElementById('id_depot');
+                        // Efface les options existantes
+                        selectDepot.innerHTML = '';
+                        // Ajoute une option pour chaque dépôt
+                        data.forEach(depot => {
+                            const option = document.createElement('option');
+                            option.value = depot.id_depot;
+                            option.textContent = depot.nom;
+                            selectDepot.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Erreur :', error));
+            }
+
+            // Appelle la fonction au chargement de la page pour remplir le select
+            fillDepotSelect();
+
+
+
+            // Fonction pour récupérer et afficher les données des colis
+            function fetchColisData() {
+                fetch('http://localhost:8080/colis')
+                    .then(response => response.json())
+                    .then(data => displayColisData(data))
+                    .catch(error => console.error('Erreur :', error));
+            }
+    
+            // Fonction pour afficher les données des colis dans le tableau
+            function displayColisData(data) {
+                const colisTableBody = document.getElementById('colisList');
+                
+                // Efface le contenu existant du tableau
+                colisTableBody.innerHTML = '';
+    
+                // Ajoute chaque colis à une nouvelle ligne du tableau
+                data.forEach(colis => {
+                    const newRow = colisTableBody.insertRow();
+    
+                    // Ajoute une cellule pour chaque propriété du dépôt
+                    const cellId = newRow.insertCell(0);
+                    cellId.textContent = colis.id_colis;
+    
+                    const cellNumero = newRow.insertCell(1);
+                    cellNumero.textContent = colis.numero;
+    
+                    const cellAdresse_livraison = newRow.insertCell(2);
+                    cellAdresse_livraison.textContent = colis.adresse_livraison;
+    
+                    const cellNom_destinataire = newRow.insertCell(3);
+                    cellNom_destinataire.textContent = colis.nom_destinataire;
+
+                    const cellPrenom_destinataire = newRow.insertCell(4);
+                    cellPrenom_destinataire.textContent = colis.prenom_destinataire;
+    
+                    const cellTel_destinataire = newRow.insertCell(5);
+                    cellTel_destinataire.textContent = colis.tel_destinataire;
+
+                    const cellId_depot = newRow.insertCell(6);
+                    cellId_depot.textContent = colis.id_depot;
+
+                    // Ajoute une cellule pour les opérations avec des boutons Supprimer et Modifier
+                    const cellOperations = newRow.insertCell(7);
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Supprimer';
+                    deleteButton.classList.add('btn', 'btn-danger');
+                    deleteButton.addEventListener('click', () => deleteColis(colis.id_colis));
+                    cellOperations.appendChild(deleteButton);
+
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Modifier';
+                    editButton.classList.add('btn', 'btn-primary', 'ms-2');
+                    editButton.addEventListener('click', () => editColis(colis.id_colis));
+                    cellOperations.appendChild(editButton);
+                });
+            }
+            // Fonction pour gérer la suppression d'un colis
+            function deleteColis(colisId) {
+                // Confirmer avec l'utilisateur avant la suppression
+                const confirmation = confirm("Voulez-vous vraiment supprimer ce colis ?");
+
+                if (confirmation) {
+                    // Configuration de la requête fetch pour supprimer le colis
+                    fetch(`http://localhost:8080/colis/delete/${colisId}`, {
+                        method: 'DELETE',
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`La suppression du colis avec l'ID ${colisId} a échoué.`);
+                        }
+                        // Rafraîchir la liste des colis après la suppression
+                        fetchColisData();
+                    })
+                    .catch(error => {
+                        console.error(error.message);
+                    });
+                }
+            }
+
+            // Appelle la fonction au chargement de la page
+            fetchColisData();
+             // Fonction pour ajouter un nouveau colis
+            function addColis() {
+                const numero = document.getElementById('numero').value;
+                const adresse_livraison = document.getElementById('adresse_livraison').value;
+                const nom_destinataire = document.getElementById('nom_destinataire').value;
+                const prenom_destinataire = document.getElementById('prenom_destinataire').value;
+                const tel_destinataire = document.getElementById('tel_destinataire').value;
+                const id_depot = document.getElementById('id_depot').value;
+
+                // Construire l'objet à envoyer au serveur
+                const newColis = {
+                    numero: numero,
+                    adresse_livraison: adresse_livraison,
+                    nom_destinataire: nom_destinataire,
+                    prenom_destinataire: prenom_destinataire,
+                    tel_destinataire: tel_destinataire,
+                    id_depot: id_depot
+                };
+
+                // Configuration de la requête fetch pour envoyer les données au serveur
+                fetch('http://localhost:8080/colis/colis', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newColis),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Nouveau colis ajouté avec succès:', data);
+                    // Rafraîchir la liste des colis après l'ajout
+                    fetchColisData();
+                })
+                .catch(error => {
+                    console.error('Erreur lors de l\'ajout du colis:', error);
+                });
+
+                // Réinitialiser le formulaire après l'ajout
+                document.getElementById('addColisForm').reset();
+            }
+
+
+
+
+
+            // Fonction pour remplir le formulaire avec les détails du colis sélectionné
+            function editColis(colisId) {
+                fetch(`http://localhost:8080/colis/${colisId}`)
+                    .then(response => response.json())
+                    .then(colis => {
+                        // Remplir le formulaire avec les détails du colis
+                        document.getElementById('numero').value = colis.numero;
+                        document.getElementById('adresse_livraison').value = colis.adresse_livraison;
+                        document.getElementById('nom_destinataire').value = colis.nom_destinataire;
+                        document.getElementById('prenom_destinataire').value = colis.prenom_destinataire;
+                        document.getElementById('tel_destinataire').value = colis.tel_destinataire;
+                        document.getElementById('id_depot').value = colis.id_depot;
+
+                        // Cacher le bouton "Ajouter"
+                        document.getElementById('addColisButton').style.display = 'none';
+                        // Afficher le bouton "Modifier"
+                        document.getElementById('updateColisButton').style.display = 'block';
+
+                        // Attacher l'ID du colis en tant qu'attribut pour le bouton "Modifier"
+                        document.getElementById('updateColisButton').setAttribute('data-colis-id', colisId);
+                    })
+                    .catch(error => console.error('Erreur :', error));
+            }
+
+
+
+            function updateColis() {
+                // Récupérer l'ID du colis à partir de l'attribut du bouton "Modifier"
+                const colisId = document.getElementById('updateColisButton').getAttribute('data-colis-id');
+                const numero = document.getElementById('numero').value;
+                const adresse_livraison = document.getElementById('adresse_livraison').value;
+                const nom_destinataire = document.getElementById('nom_destinataire').value;
+                const prenom_destinataire = document.getElementById('prenom_destinataire').value;
+                const tel_destinataire = document.getElementById('tel_destinataire').value;
+                const id_depot = document.getElementById('id_depot').value;
+
+                // Construire l'objet à envoyer au serveur pour la mise à jour
+                const updatedColis = {
+                    numero: numero,
+                    adresse_livraison: adresse_livraison,
+                    nom_destinataire: nom_destinataire,
+                    prenom_destinataire: prenom_destinataire,
+                    tel_destinataire: tel_destinataire,
+                    id_depot: id_depot
+                };
+
+                // Configuration de la requête fetch pour mettre à jour les données du colis
+                fetch(`http://localhost:8080/colis/update/${colisId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedColis),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Colis mis à jour avec succès:', data);
+                    // Réinitialiser le formulaire après la mise à jour
+                    document.getElementById('addColisForm').reset();
+                    // Rétablir le bouton Ajouter pour exécuter la fonction d'ajout
+                    const addButton = document.getElementById('addColisButton');
+                    addButton.textContent = 'Ajouter';
+                    addButton.removeEventListener('click', updateColis);
+                    addButton.addEventListener('click', addColis);
+                    // Rafraîchir la liste des colis après la mise à jour
+                    fetchColisData();
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la mise à jour du colis:', error);
+                });
+                // Masquer le bouton "Modifier"
+                document.getElementById('updateColisButton').style.display = 'none';
+                // Réafficher le bouton "Ajouter"
+                document.getElementById('addColisButton').style.display = 'block';
+
+                // Réinitialiser l'ID du colis dans l'attribut du bouton "Modifier"
+                document.getElementById('updateColisButton').removeAttribute('data-colis-id');
+            }
+
+
+        </script>
+
+
+
+        <footer class="footer">
+            <p> Copyright © 2023 Dépôt-Colis </p>
+        </footer>
+</body>
+</html>

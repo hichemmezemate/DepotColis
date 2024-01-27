@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css.css" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <title>Dépot-Colis</title>
+    <title>Dépôt</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg bg-warning">
+        <a href="index.html">
+            <img src="images/Logo_DepotColis.png" alt="Image Dépôt Colis" height="70">
+        </a>
+        <div class="container-fluid">
+          <a class="navbar-brand" href="index.html">Dépot-Colis</a>
+          <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav">
+              <a class="nav-link" href="depot.html">Dépôts</a>
+              <a class="nav-link" href="colis.html">Colis</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+
+    
+    <center>
+        <br>
+        <h1>Liste des Dépôts</h1>
+
+        <table class="table table-warning container" id="depotTable" border="1">
+            <thead>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Nom</th>
+                    <th scope="col">Adresse</th>
+                    <th scope="col">Capacité</th>
+                    <th scope="col">Opérations</th>
+                </tr>
+            </thead>
+            <tbody id="depotList"></tbody>
+        </table>
+
+        <!-- Formulaire pour l'ajout d'un nouveau dépôt -->
+        <div class="mt-4 container">
+            <h2>Ajouter un nouveau Dépôt</h2>
+            <form class="container" id="addDepotForm">
+                <input type="text" class="form-control"  placeholder="Nom de dépôt...." id="nom" name="nom" required>
+                <br>
+                <input type="text" class="form-control"   placeholder="Adresse de dépôt...." id="adresse" name="adresse" required>
+                <br>
+                <input type="number" class="form-control"  placeholder="Capacité du dépôt...." id="capacite" name="capacite" required>
+                <br>
+                <button type="button" id="addDepotButton" class="form-control btn btn-success" onclick="addDepot()">Ajouter</button>
+                <button type="button" id="updateDepotButton" class="form-control btn btn-primary" style="display: none;" onclick="updateDepot()">Modifier</button>
+            </form>
+        </div>
+        
+    
+        <script>
+            // Fonction pour récupérer et afficher les données des dépôts
+            function fetchDepotData() {
+                fetch('http://localhost:8080/depot')
+                    .then(response => response.json())
+                    .then(data => displayDepotData(data))
+                    .catch(error => console.error('Erreur :', error));
+            }
+    
+            // Fonction pour afficher les données des dépôts dans le tableau
+            function displayDepotData(data) {
+                const depotTableBody = document.getElementById('depotList');
+                
+                // Efface le contenu existant du tableau
+                depotTableBody.innerHTML = '';
+    
+                // Ajoute chaque dépôt à une nouvelle ligne du tableau
+                data.forEach(depot => {
+                    const newRow = depotTableBody.insertRow();
+    
+                    // Ajoute une cellule pour chaque propriété du dépôt
+                    const cellId = newRow.insertCell(0);
+                    cellId.textContent = depot.id_depot;
+    
+                    const cellNom = newRow.insertCell(1);
+                    cellNom.textContent = depot.nom;
+    
+                    const cellAdresse = newRow.insertCell(2);
+                    cellAdresse.textContent = depot.adresse;
+    
+                    const cellCapacite = newRow.insertCell(3);
+                    cellCapacite.textContent = depot.capacite;
+
+                    // Ajoute une cellule pour les opérations avec des boutons Supprimer et Modifier
+                    const cellOperations = newRow.insertCell(4);
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Supprimer';
+                    deleteButton.classList.add('btn', 'btn-danger');
+                    deleteButton.addEventListener('click', () => deleteDepot(depot.id_depot));
+                    cellOperations.appendChild(deleteButton);
+
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Modifier';
+                    editButton.classList.add('btn', 'btn-primary', 'ms-2');
+                    editButton.addEventListener('click', () => editDepot(depot.id_depot));
+                    cellOperations.appendChild(editButton);
+                });
+            }
+            // Fonction pour gérer la suppression d'un dépôt
+            function deleteDepot(depotId) {
+                // Confirmer avec l'utilisateur avant la suppression
+                const confirmation = confirm("Voulez-vous vraiment supprimer ce dépôt ?");
+
+                if (confirmation) {
+                    // Configuration de la requête fetch pour supprimer le dépôt
+                    fetch(`http://localhost:8080/depot/delete/${depotId}`, {
+                        method: 'DELETE',
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`La suppression du dépôt avec l'ID ${depotId} a échoué.`);
+                        }
+                        // Rafraîchir la liste des dépôts après la suppression
+                        fetchDepotData();
+                    })
+                    .catch(error => {
+                        console.error(error.message);
+                    });
+                }
+            }
+            // Fonction pour remplir le formulaire avec les détails du depot sélectionné
+            function editDepot(depotId) {
+                fetch(`http://localhost:8080/depot/${depotId}`)
+                    .then(response => response.json())
+                    .then(depot => {
+                        // Remplir le formulaire avec les détails du depot
+                        document.getElementById('nom').value = depot.nom;
+                        document.getElementById('adresse').value = depot.adresse;
+                        document.getElementById('capacite').value = depot.capacite;
+
+                        // Cacher le bouton "Ajouter"
+                        document.getElementById('addDepotButton').style.display = 'none';
+                        // Afficher le bouton "Modifier"
+                        document.getElementById('updateDepotButton').style.display = 'block';
+
+                        // Attacher l'ID du depot en tant qu'attribut pour le bouton "Modifier"
+                        document.getElementById('updateDepotButton').setAttribute('data-depot-id', depotId);
+                    })
+                    .catch(error => console.error('Erreur :', error));
+            }
+            // Appelle la fonction au chargement de la page
+            fetchDepotData();
+            // Fonction pour ajouter un nouveau dépôt
+            function addDepot() {
+                const nom = document.getElementById('nom').value;
+                const adresse = document.getElementById('adresse').value;
+                const capacite = document.getElementById('capacite').value;
+
+                // Construire l'objet à envoyer au serveur
+                const newDepot = {
+                    nom: nom,
+                    adresse: adresse,
+                    capacite: capacite
+                };
+
+                // Configuration de la requête fetch pour envoyer les données au serveur
+                fetch('http://localhost:8080/depot/depot', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newDepot),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Nouveau dépôt ajouté avec succès:', data);
+                    // Rafraîchir la liste des dépôts après l'ajout
+                    fetchDepotData();
+                })
+                .catch(error => {
+                    console.error('Erreur lors de l\'ajout du dépôt:', error);
+                });
+
+                // Réinitialiser le formulaire après l'ajout
+                document.getElementById('addDepotForm').reset();
+            }
+
+            function updateDepot() {
+                // Récupérer l'ID du depot à partir de l'attribut du bouton "Modifier"
+                const depotId = document.getElementById('updateDepotButton').getAttribute('data-depot-id');
+                const nom = document.getElementById('nom').value;
+                const adresse = document.getElementById('adresse').value;
+                const capacite = document.getElementById('capacite').value;
+
+                // Construire l'objet à envoyer au serveur pour la mise à jour
+                const updateDepot = {
+                    nom: nom,
+                    adresse: adresse,
+                    capacite: capacite
+                };
+
+                // Configuration de la requête fetch pour mettre à jour les données du dépôt
+                fetch(`http://localhost:8080/depot/update/${depotId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updateDepot),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Dépôt mis à jour avec succès:', data);
+                    // Réinitialiser le formulaire après la mise à jour
+                    document.getElementById('addDepotForm').reset();
+                    // Rétablir le bouton Ajouter pour exécuter la fonction d'ajout
+                    const addButton = document.getElementById('addDepotButton');
+                    addButton.textContent = 'Ajouter';
+                    addButton.removeEventListener('click', updateDepot);
+                    addButton.addEventListener('click', addDepot);
+                    // Rafraîchir la liste des dépôt après la mise à jour
+                    fetchDepotData();
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la mise à jour du dépôt:', error);
+                });
+                // Masquer le bouton "Modifier"
+                document.getElementById('updateDepotButton').style.display = 'none';
+                // Réafficher le bouton "Ajouter"
+                document.getElementById('addDepotButton').style.display = 'block';
+
+                // Réinitialiser l'ID du dépôt dans l'attribut du bouton "Modifier"
+                document.getElementById('updateDepotButton').removeAttribute('data-depot-id');
+            }
+        </script>
+
+
+
+<footer class="footer">
+    <p> Copyright © 2023 Dépôt-Colis </p>
+</footer>
+    </center>
+</body>
+</html>
